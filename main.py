@@ -1,22 +1,23 @@
 from PIL import Image
 import numpy as np
 import HitInfo
+import Sphere
+
 
 # the render result will be saved here
 image = Image.new(mode="RGB", size=(400, 300))
 width, height = image.size
 aspect_ratio = width/height
 
-# define a sphere at (0,0,0) with radius 1
-sphere_center = np.array([0.0,0.0,4.0])
-sphere_radius = 1.0
+# define a sphere at (0,0,4) with radius 1 and color (1.0,0.2,0.4)
+sphere = Sphere.Sphere(np.array([0.0,0.0,4.0]), 1.0, np.array([1.0,0.2,0.4]))
 
 # define camera with vfov 60 degrees
 # always pointing in +z direction
 cam_vfov = 40.0 * 3.14159265/180.0
 near = 1.0/np.tan(cam_vfov)
 # define a point light source at (-1, 3, 3)
-light_pos = np.array([-1.0,3.0,2.0])
+light_pos = np.array([-2.0,3.0,1.0])
 
 # c - center of the sphere
 # r - radius of the sphere
@@ -62,7 +63,7 @@ def frag(frag_coord: tuple[int, int]) -> tuple[int, int, int]:
 
     # if ray intersects sphere make pixel white else black
     color = np.array([0.0, 0.0, 0.0])
-    ray_hit_info = ray_sphere_intersection(sphere_center, sphere_radius, ray_dir)
+    ray_hit_info = ray_sphere_intersection(sphere.center, sphere.radius, ray_dir)
     if ray_hit_info.hit:
 
         light_dir = light_pos - ray_hit_info.coords
@@ -71,7 +72,10 @@ def frag(frag_coord: tuple[int, int]) -> tuple[int, int, int]:
         normal = ray_hit_info.normal
 
         # simple diffuse lighting
-        color = np.array([1.0, 1.0, 1.0]) * np.dot(light_dir, normal)
+        color = sphere.color * np.dot(light_dir, normal)
+
+    else:
+        color = np.array([0.17, 0.2, 0.23])
 
     # convert np array to tuple of ints (0.0-1.0 -> 0-255)
     int_color = np.rint(color * 255).astype(int)
